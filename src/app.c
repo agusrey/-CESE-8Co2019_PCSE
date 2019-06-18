@@ -21,6 +21,8 @@
 
 #include "Botones.h"
 
+
+
 /*================[Prototipos]=============================================*/
 void Led_parpadea(void* taskParmPtr);
 void Update_MCPWM(void* taskParmPtr);
@@ -51,14 +53,16 @@ int main(void) {
 
 	// Inicializar y configurar la plataforma
 	boardConfig();
+	semaforo= xSemaphoreCreateBinary();
+	xSemaphoreGive(semaforo);
 
 	gpioInit(GPIO8, GPIO_OUTPUT); //prepara GPIO8 como salida. Esta salida se togglea con la interrupción del MCPWM
-
+/*
 	MCPWM_Init(LPC_MCPWM);							//inicializa el MCPWM
 	MCPWM_Pin_Init();					//configura pines de salida del MCPWM
 	MCPWM_ACMode(LPC_MCPWM, ENABLE);			//configura el MCPWM en modo AC
 	MCPWM_InitChannels(LPC_MCPWM, Pwm_Channels);//inicializa los 3 canales del MCPWM
-
+*/
 	//======== Configura la Interrupción del MCPWM
 	//MCPWM_IntConfig(LPC_MCPWM, MCPWM_INTFLAG_LIM0, ENABLE); //configura interrupción cuando se completa el período en el canal 0
 	//NVIC_EnableIRQ(MCPWM_IRQn);				//habilita la inerrupción en el NVIC
@@ -85,7 +89,7 @@ int main(void) {
 			(const char *) "Teclado", // Nombre de la tarea como String amigable para el usuario
 			configMINIMAL_STACK_SIZE * 2, // Cantidad de stack de la tarea
 			0,                          // Parametros de tarea
-			tskIDLE_PRIORITY + 3,         // Prioridad de la tarea(baja)
+			tskIDLE_PRIORITY + 1,         // Prioridad de la tarea(baja)
 			0                         // Puntero a la tarea creada en el sistema
 			);
 
@@ -135,13 +139,14 @@ void Update_MCPWM(void* taskParmPtr) {
 	MCPWM_CHANNEL_CFG_Type ChannelConfig;
 
 	while (true) {
-
+		xSemaphoreTake(semaforo, portMAX_DELAY);
+		gpioToggle(LEDB);
 		switch (bp) {
 		case 0:
-			MCPWM_Start(LPC_MCPWM, 1, 1, 1); //arranca el MCPWM los 3 canales a la vez
+			//MCPWM_Start(LPC_MCPWM, 1, 1, 1); //arranca el MCPWM los 3 canales a la vez
 			break;
 		case 1:
-			MCPWM_Stop(LPC_MCPWM, 1, 1, 1); //arranca el MCPWM los 3 canales a la vez
+			//MCPWM_Stop(LPC_MCPWM, 1, 1, 1); //arranca el MCPWM los 3 canales a la vez
 			break;
 
 		case 2:
@@ -150,7 +155,7 @@ void Update_MCPWM(void* taskParmPtr) {
 				canal.pulse_width[0] += 200;
 				ChannelConfig.channelPulsewidthValue = canal.pulse_width[0];
 				ChannelConfig.channelPeriodValue = 20400;
-				MCPWM_WriteToShadow(LPC_MCPWM, 0, &ChannelConfig);
+				//MCPWM_WriteToShadow(LPC_MCPWM, 0, &ChannelConfig);
 			}
 			else
 				dir = FALSE;
@@ -160,20 +165,13 @@ void Update_MCPWM(void* taskParmPtr) {
 				canal.pulse_width[0] -= 200;
 				ChannelConfig.channelPulsewidthValue = canal.pulse_width[0];
 				ChannelConfig.channelPeriodValue = 20400;
-				MCPWM_WriteToShadow(LPC_MCPWM, 0, &ChannelConfig);
+				//MCPWM_WriteToShadow(LPC_MCPWM, 0, &ChannelConfig);
 			}
 			else
 				dir = TRUE;
 			break;
 		}
 		bp = 0xff;
-		vTaskDelay(10);
-		/*
-		 *acá puse un delay, porque el semáforo aún no me funciona
-		 *Para que funcione con el semáforo hay que descomentar el take y también
-		 *descomentar el give en Botones.c
-		 */
-		//xSemaphoreTake(semaforo, portMAX_DELAY);
 	}
 }
 
@@ -211,3 +209,4 @@ void MCPWM_IRQHandler(void) {
 	}
 }
 */
+

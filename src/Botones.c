@@ -81,17 +81,18 @@ void tecla(void* taskParmPtr) {
 		for (tecIndice = 0; tecIndice < CANT_TECLAS; tecIndice++) {
 			if (fsmArreb(&BotSt[tecIndice])) {
 				bp=tecIndice;
-				/*
-				 *Estesemáforo aún no me funciona
-				 *Para que funcione con el semáforo hay que descomentar el give y también
-				 *descomentar el take en Botones.c
-				 */
-				//xSemaphoreGive(semaforo);
+				//
+				//Estesemáforo aún no me funciona
+				//Para que funcione con el semáforo hay que descomentar el give y también
+				//descomentar el take en app.c
+				//
+				xSemaphoreGive(semaforo);
 			}
-			vTaskDelay(5 / portTICK_PERIOD_MS);
+
 		}
 	}
 }
+
 /*=====[Implementaciones de funciones de interrupcion publicas]==============*/
 /*
  void UART0_IRQHandler(void)
@@ -151,3 +152,4 @@ static bool fsmArreb(arrebSt_t* Boton) {
 	}
 	return (retorno);
 }
+
